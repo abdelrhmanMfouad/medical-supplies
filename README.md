@@ -1,84 +1,128 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-# Medical-supplies
-Medical supplies Management System 
-=======
-=======
->>>>>>> master
-# React + TypeScript + Vite
+# 🏥 Medical Inventory System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack medical inventory management system built with React, TypeScript, Node.js, Express, and MongoDB. It helps hospitals, pharmacies, and medical centers track stock, manage items, suppliers, and categories, receive smart alerts, and generate reports with AI predictions.
 
-Currently, two official plugins are available:
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?logo=mongodb&logoColor=white)
+![Tailwind](https://img.shields.io/badge/TailwindCSS-3-06B6D4?logo=tailwindcss&logoColor=white)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 📖 Table of Contents
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- [Overview](#-overview)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [API Endpoints](#-api-endpoints)
+- [Screenshots](#-screenshots)
+- [Demo Accounts](#-demo-accounts)
+- [Roadmap](#-roadmap)
+- [Author](#-author)
+- [License](#-license)
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🔍 Overview
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Medical Inventory System is a complete inventory management solution for the healthcare sector. It solves real problems such as medication stockouts, expired drugs, and lack of real-time tracking — by providing a centralized, secure, and easy-to-use platform.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+**Key goals:**
+- ✅ Track every item from Stock IN to Stock OUT
+- ✅ Get automatic alerts before stock runs out
+- ✅ Generate AI-powered predictions for future usage
+- ✅ Export reports (PDF) with one click
+- ✅ Manage everything from one dashboard
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ✨ Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 🔐 Authentication & Authorization
+- Login / Register / Logout
+- JWT-based authentication
+- Role-based access control (Admin, Manager, Staff, Viewer)
+- Forgot password / Reset password
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-<<<<<<< HEAD
->>>>>>> 7ec10a0 (build sidebar,topbar,dashboard(main heading,cards))
-=======
->>>>>>> master
+### 📦 Items Management
+- Full CRUD (Create, Read, Update, Delete)
+- Search, filters, and pagination
+- Stock status badges (In Stock, Low Stock, Out of Stock, Expiring Soon)
+- Assign category and supplier
+
+### 🏷️ Categories
+- CRUD operations
+- Auto item count per category
+- Prevent deleting categories with items
+
+### 🏢 Suppliers
+- CRUD operations
+- Contact information management
+- Supplier-item relationships
+
+### 📊 Stock Management
+- Stock IN and Stock OUT
+- Automatic inventory quantity updates
+- Stock history table with filters
+- Auto-generate alerts on low stock
+
+### 🔔 Alerts & Notifications
+- Low stock alerts
+- Out-of-stock alerts
+- Expiring soon alerts
+- Dismiss / Resolve alerts
+- Dashboard alerts widget
+
+### 📈 Reports & Analytics
+- Inventory report
+- Stock movement report
+- Charts: Bar, Line, Pie
+- AI usage predictions with confidence score
+- Export to PDF
+
+### 🎨 Dashboard
+- KPI cards (Total Items, Low Stock, Out of Stock, Suppliers)
+- Recent transactions
+- Quick access links
+- Dark mode
+
+### ⚙️ Settings
+- Profile update
+- Profile image upload
+- Preferences
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| React 18 | UI framework |
+| TypeScript | Type safety |
+| Tailwind CSS | Styling |
+| Redux Toolkit | State management |
+| React Router v6 | Routing |
+| Axios | HTTP client |
+| Recharts | Charts |
+| jsPDF | PDF export |
+
+### Backend
+| Technology | Purpose |
+|------------|---------|
+| Node.js | Runtime |
+| Express.js | Web framework |
+| TypeScript | Type safety |
+| MongoDB | Database |
+| Mongoose | ODM |
+| JWT | Authentication |
+| Bcrypt | Password hashing |
+| Nodemailer | Email sending |
+
+---
+
+## 📂 Project Structure
