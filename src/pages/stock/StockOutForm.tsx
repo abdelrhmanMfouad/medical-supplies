@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { StockOutDTO } from './stock.types';
-import { validateStockOut, StockOutErrors } from './stockValidation';
+import { validateStockOut, type StockOutErrors } from './stockValidation';
 
 interface StockOutFormProps {
   items: { id: string; name: string; sku: string; quantity: number; unit: string }[];
@@ -22,19 +22,17 @@ const StockOutForm: React.FC<StockOutFormProps> = ({
     notes: '',
   });
   const [errors, setErrors] = useState<StockOutErrors>({});
-  const selectedItem = useMemo(() => {
-    const item = items.find(i => i.id === formData.itemId);
-    return item ? { name: item.name, unit: item.unit, quantity: item.quantity } : null;
-  }, [formData.itemId, items]);
+  const selectedItem = items.find((i) => i.id === formData.itemId) ?? null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const name = e.target.name as keyof StockOutDTO;
+    const value = e.target.value;
     setFormData(prev => ({
       ...prev,
       [name]: name === 'quantity' ? parseFloat(value) || 0 : value
     }));
     if (errors[name as keyof StockOutErrors]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors(prev => ({ ...prev, [name as keyof StockOutErrors]: undefined }));
     }
   };
 
@@ -54,16 +52,16 @@ const StockOutForm: React.FC<StockOutFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Select Item *
         </label>
         <select
           name="itemId"
           value={formData.itemId}
           onChange={handleChange}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
-            errors.itemId ? 'border-red-500' : 'border-gray-300'
-          }`}
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-red-500 ${
+            errors.itemId ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+          } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
         >
           <option value="">Select an item...</option>
           {items.map((item) => (
@@ -76,18 +74,18 @@ const StockOutForm: React.FC<StockOutFormProps> = ({
       </div>
 
       {selectedItem && (
-        <div className="bg-yellow-50 p-3 rounded-lg">
-          <p className="text-sm text-yellow-700">
-            Withdrawing from: <strong>{selectedItem.name}</strong>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-3 rounded-lg">
+          <p className="text-sm text-red-700 dark:text-red-300">
+            ⚠️ Withdrawing from: <strong>{selectedItem.name}</strong>
           </p>
-          <p className="text-sm text-yellow-600">
+          <p className="text-sm text-red-600 dark:text-red-400">
             Available: {selectedItem.quantity} {selectedItem.unit}
           </p>
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Quantity to Withdraw *
         </label>
         <input
@@ -96,18 +94,18 @@ const StockOutForm: React.FC<StockOutFormProps> = ({
           value={formData.quantity}
           onChange={handleChange}
           min="1"
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
-            errors.quantity ? 'border-red-500' : 'border-gray-300'
-          }`}
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-red-500 ${
+            errors.quantity ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+          } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
         />
         {errors.quantity && <p className="mt-1 text-xs text-red-600">{errors.quantity}</p>}
         {selectedItem && (
-          <p className="mt-1 text-xs text-gray-500">Unit: {selectedItem.unit}</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Unit: {selectedItem.unit}</p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Reference (Optional)
         </label>
         <input
@@ -115,13 +113,13 @@ const StockOutForm: React.FC<StockOutFormProps> = ({
           name="reference"
           value={formData.reference}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           placeholder="e.g., RX-12345"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Notes (Optional)
         </label>
         <textarea
@@ -129,7 +127,7 @@ const StockOutForm: React.FC<StockOutFormProps> = ({
           value={formData.notes}
           onChange={handleChange}
           rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           placeholder="Any additional notes..."
         />
       </div>
@@ -145,7 +143,7 @@ const StockOutForm: React.FC<StockOutFormProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           Cancel
         </button>

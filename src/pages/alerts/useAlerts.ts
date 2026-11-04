@@ -15,7 +15,7 @@ import {
   clearFilters,
   clearError,
 } from './alertsSlice';
-import { CreateAlertDTO } from './alerts.types';
+import { CreateAlertDTO } from './alerts.types';  // ✅ استورد CreateAlertDTO بس
 
 export const useAlerts = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -83,6 +83,7 @@ export const useAlerts = () => {
   const handleDismiss = useCallback(
     async (id: string) => {
       const result = await dispatch(dismissAlert(id)).unwrap();
+      dispatch(fetchActiveAlerts());
       return result;
     },
     [dispatch]
@@ -91,6 +92,7 @@ export const useAlerts = () => {
   const handleResolve = useCallback(
     async (id: string) => {
       const result = await dispatch(resolveAlert(id)).unwrap();
+      dispatch(fetchActiveAlerts());
       return result;
     },
     [dispatch]
@@ -99,6 +101,7 @@ export const useAlerts = () => {
   const handleCreateAlert = useCallback(
     async (data: CreateAlertDTO) => {
       const result = await dispatch(createAlert(data)).unwrap();
+      dispatch(fetchAlerts());
       return result;
     },
     [dispatch]
@@ -157,6 +160,7 @@ export const useAlerts = () => {
     dismissAlert: handleDismiss,
     resolveAlert: handleResolve,
     createAlert: handleCreateAlert,
+    checkAlerts: () => dispatch(checkAlerts()),
     
     // Filter Actions
     filterByType: handleTypeFilter,

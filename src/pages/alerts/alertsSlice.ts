@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { AlertsState, CreateAlertDTO } from './alerts.types';
-import { alertsService } from './alertsService';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { AlertsState, Alert, CreateAlertDTO } from './alerts.types';
+import api from '../../services/api';
 
 const initialState: AlertsState = {
   alerts: [],
@@ -17,69 +17,110 @@ const initialState: AlertsState = {
   },
 };
 
-// Async Thunks
-export const fetchAlerts = createAsyncThunk(
-  'alerts/fetchAlerts',
-  async () => {
-    const response = await alertsService.getAlerts();
-    return response;
+// ✅ Fetch Alerts
+export const fetchAlerts = createAsyncThunk<
+  Alert[],
+  void,
+  { rejectValue: string }
+>('alerts/fetchAlerts', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<Alert[]>('/alerts');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch alerts');
   }
-);
+});
 
-export const fetchActiveAlerts = createAsyncThunk(
-  'alerts/fetchActiveAlerts',
-  async () => {
-    const response = await alertsService.getActiveAlerts();
-    return response;
+// ✅ Fetch Active Alerts
+export const fetchActiveAlerts = createAsyncThunk<
+  Alert[],
+  void,
+  { rejectValue: string }
+>('alerts/fetchActiveAlerts', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<Alert[]>('/alerts/active');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch active alerts');
   }
-);
+});
 
-export const dismissAlert = createAsyncThunk(
-  'alerts/dismissAlert',
-  async (id: string) => {
-    const response = await alertsService.dismissAlert(id);
-    return response;
+// ✅ Dismiss Alert
+export const dismissAlert = createAsyncThunk<
+  Alert,
+  string,
+  { rejectValue: string }
+>('alerts/dismissAlert', async (id, { rejectWithValue }) => {
+  try {
+    const response = await api.put<{ alert: Alert }>(`/alerts/${id}/dismiss`);
+    return response.data.alert;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to dismiss alert');
   }
-);
+});
 
-export const resolveAlert = createAsyncThunk(
-  'alerts/resolveAlert',
-  async (id: string) => {
-    const response = await alertsService.resolveAlert(id);
-    return response;
+// ✅ Resolve Alert
+export const resolveAlert = createAsyncThunk<
+  Alert,
+  string,
+  { rejectValue: string }
+>('alerts/resolveAlert', async (id, { rejectWithValue }) => {
+  try {
+    const response = await api.put<{ alert: Alert }>(`/alerts/${id}/resolve`);
+    return response.data.alert;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to resolve alert');
   }
-);
+});
 
-export const createAlert = createAsyncThunk(
-  'alerts/createAlert',
-  async (data: CreateAlertDTO) => {
-    const response = await alertsService.createAlert(data);
-    return response;
+// ✅ Create Alert (أضف هذا)
+export const createAlert = createAsyncThunk<
+  Alert,
+  CreateAlertDTO,
+  { rejectValue: string }
+>('alerts/createAlert', async (data, { rejectWithValue }) => {
+  try {
+    const response = await api.post<Alert>('/alerts', data);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to create alert');
   }
-);
+});
 
-export const checkAlerts = createAsyncThunk(
-  'alerts/checkAlerts',
-  async () => {
-    const response = await alertsService.getActiveAlerts();
-    return response;
+// ✅ Check Alerts
+export const checkAlerts = createAsyncThunk<
+  Alert[],
+  void,
+  { rejectValue: string }
+>('alerts/checkAlerts', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<{ alerts: Alert[] }>('/alerts/check');
+    return response.data.alerts || [];
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to check alerts');
   }
-);
+});
 
 const alertsSlice = createSlice({
   name: 'alerts',
   initialState,
   reducers: {
-    setTypeFilter: (state, action) => {
+    setTypeFilter: (state, action: PayloadAction<string>) => {
       state.filters.type = action.payload;
     },
-    setPriorityFilter: (state, action) => {
+    setPriorityFilter: (state, action: PayloadAction<string>) => {
       state.filters.priority = action.payload;
     },
-    setStatusFilter: (state, action) => {
+    setStatusFilter: (state, action: PayloadAction<string>) => {
       state.filters.status = action.payload;
     },
-    setSearchFilter: (state, action) => {
+    setSearchFilter: (state, action: PayloadAction<string>) => {
       state.filters.search = action.payload;
     },
     clearFilters: (state) => {
@@ -95,41 +136,60 @@ const alertsSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchAlerts.fulfilled, (state, action) => {
+      .addCase(fetchAlerts.fulfilled, (state, action: PayloadAction<Alert[]>) => {
         state.isLoading = false;
         state.alerts = action.payload;
-        state.activeAlerts = action.payload.filter(a => a.status === 'ACTIVE');
-        state.dismissedAlerts = action.payload.filter(a => a.status === 'DISMISSED');
-        state.resolvedAlerts = action.payload.filter(a => a.status === 'RESOLVED');
+        state.activeAlerts = action.payload.filter((a) => a.status === 'ACTIVE');
+        state.dismissedAlerts = action.payload.filter((a) => a.status === 'DISMISSED');
+        state.resolvedAlerts = action.payload.filter((a) => a.status === 'RESOLVED');
       })
       .addCase(fetchAlerts.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Failed to fetch alerts';
+        state.error = action.payload || 'Failed to fetch alerts';
       })
-      .addCase(fetchActiveAlerts.fulfilled, (state, action) => {
+      .addCase(fetchActiveAlerts.fulfilled, (state, action: PayloadAction<Alert[]>) => {
+        state.isLoading = false;
         state.activeAlerts = action.payload;
       })
-      .addCase(dismissAlert.fulfilled, (state, action) => {
-        const index = state.alerts.findIndex(a => a.id === action.payload.id);
+      .addCase(dismissAlert.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(dismissAlert.fulfilled, (state, action: PayloadAction<Alert>) => {
+        state.isLoading = false;
+        const index = state.alerts.findIndex((a) => a.id === action.payload.id);
         if (index !== -1) {
           state.alerts[index] = action.payload;
         }
-        state.activeAlerts = state.alerts.filter(a => a.status === 'ACTIVE');
-        state.dismissedAlerts = state.alerts.filter(a => a.status === 'DISMISSED');
+        state.activeAlerts = state.alerts.filter((a) => a.status === 'ACTIVE');
+        state.dismissedAlerts = state.alerts.filter((a) => a.status === 'DISMISSED');
+        state.resolvedAlerts = state.alerts.filter((a) => a.status === 'RESOLVED');
       })
-      .addCase(resolveAlert.fulfilled, (state, action) => {
-        const index = state.alerts.findIndex(a => a.id === action.payload.id);
+      .addCase(dismissAlert.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to dismiss alert';
+      })
+      .addCase(resolveAlert.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(resolveAlert.fulfilled, (state, action: PayloadAction<Alert>) => {
+        state.isLoading = false;
+        const index = state.alerts.findIndex((a) => a.id === action.payload.id);
         if (index !== -1) {
           state.alerts[index] = action.payload;
         }
-        state.activeAlerts = state.alerts.filter(a => a.status === 'ACTIVE');
-        state.resolvedAlerts = state.alerts.filter(a => a.status === 'RESOLVED');
+        state.activeAlerts = state.alerts.filter((a) => a.status === 'ACTIVE');
+        state.dismissedAlerts = state.alerts.filter((a) => a.status === 'DISMISSED');
+        state.resolvedAlerts = state.alerts.filter((a) => a.status === 'RESOLVED');
       })
-      .addCase(createAlert.fulfilled, (state, action) => {
+      .addCase(resolveAlert.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to resolve alert';
+      })
+      .addCase(createAlert.fulfilled, (state, action: PayloadAction<Alert>) => {
         state.alerts.unshift(action.payload);
-        state.activeAlerts = state.alerts.filter(a => a.status === 'ACTIVE');
+        state.activeAlerts = state.alerts.filter((a) => a.status === 'ACTIVE');
       })
-      .addCase(checkAlerts.fulfilled, (state, action) => {
+      .addCase(checkAlerts.fulfilled, (state, action: PayloadAction<Alert[]>) => {
         state.activeAlerts = action.payload;
       });
   },

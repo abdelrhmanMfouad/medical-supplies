@@ -3,13 +3,15 @@
     "ignoreDeprecations": "6.0",
     "composite": true,
     "noEmit": false,
-    "types": ["node"],
-
+    "types": ["node", "vite/client"],
+    "skipLibCheck": true,
+    "allowJs": true,
+    "esModuleInterop": true,
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",
-
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

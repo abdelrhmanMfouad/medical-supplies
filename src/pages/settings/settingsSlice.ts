@@ -3,10 +3,6 @@ import {
   SettingsState, 
   UpdateProfileData, 
   PasswordUpdateData,
-  NotificationSettings,
-  ThemeSettings,
-  InventorySettings,
-  Preferences 
 } from './settings.types';
 import { settingsService } from './settingsService';
 
@@ -48,7 +44,7 @@ const initialState: SettingsState = {
   successMessage: null,
 };
 
-// Async Thunks
+// ✅ Fetch Profile
 export const fetchProfile = createAsyncThunk(
   'settings/fetchProfile',
   async () => {
@@ -57,6 +53,7 @@ export const fetchProfile = createAsyncThunk(
   }
 );
 
+// ✅ Update Profile
 export const updateProfile = createAsyncThunk(
   'settings/updateProfile',
   async (data: UpdateProfileData) => {
@@ -65,6 +62,7 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
+// ✅ Update Password
 export const updatePassword = createAsyncThunk(
   'settings/updatePassword',
   async (data: PasswordUpdateData, { rejectWithValue }) => {
@@ -77,75 +75,16 @@ export const updatePassword = createAsyncThunk(
   }
 );
 
+// ✅ Upload Avatar
 export const uploadAvatar = createAsyncThunk(
   'settings/uploadAvatar',
-  async (file: File) => {
-    const response = await settingsService.uploadAvatar(file);
-    return response;
-  }
-);
-
-export const fetchNotificationSettings = createAsyncThunk(
-  'settings/fetchNotificationSettings',
-  async () => {
-    const response = await settingsService.getNotificationSettings();
-    return response;
-  }
-);
-
-export const updateNotificationSettings = createAsyncThunk(
-  'settings/updateNotificationSettings',
-  async (settings: NotificationSettings) => {
-    const response = await settingsService.updateNotificationSettings(settings);
-    return response;
-  }
-);
-
-export const fetchThemeSettings = createAsyncThunk(
-  'settings/fetchThemeSettings',
-  async () => {
-    const response = await settingsService.getThemeSettings();
-    return response;
-  }
-);
-
-export const updateThemeSettings = createAsyncThunk(
-  'settings/updateThemeSettings',
-  async (settings: ThemeSettings) => {
-    const response = await settingsService.updateThemeSettings(settings);
-    return response;
-  }
-);
-
-export const fetchInventorySettings = createAsyncThunk(
-  'settings/fetchInventorySettings',
-  async () => {
-    const response = await settingsService.getInventorySettings();
-    return response;
-  }
-);
-
-export const updateInventorySettings = createAsyncThunk(
-  'settings/updateInventorySettings',
-  async (settings: InventorySettings) => {
-    const response = await settingsService.updateInventorySettings(settings);
-    return response;
-  }
-);
-
-export const fetchPreferences = createAsyncThunk(
-  'settings/fetchPreferences',
-  async () => {
-    const response = await settingsService.getPreferences();
-    return response;
-  }
-);
-
-export const updatePreferences = createAsyncThunk(
-  'settings/updatePreferences',
-  async (preferences: Preferences) => {
-    const response = await settingsService.updatePreferences(preferences);
-    return response;
+  async (file: File, { rejectWithValue }) => {
+    try {
+      const response = await settingsService.uploadAvatar(file);
+      return response;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
   }
 );
 
@@ -162,7 +101,7 @@ const settingsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Profile
+      // ✅ Fetch Profile
       .addCase(fetchProfile.pending, (state) => {
         state.isLoading = true;
       })
@@ -174,22 +113,27 @@ const settingsSlice = createSlice({
         state.isLoading = false;
         state.error = action.error.message || 'Failed to fetch profile';
       })
-      // Update Profile
+      // ✅ Update Profile
       .addCase(updateProfile.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
+        state.successMessage = null;
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         state.profile = action.payload;
         state.successMessage = 'Profile updated successfully';
+        console.log('✅ Profile updated in state:', state.profile);
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || 'Failed to update profile';
       })
-      // Update Password
+      // ✅ Update Password
       .addCase(updatePassword.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
+        state.successMessage = null;
       })
       .addCase(updatePassword.fulfilled, (state, action) => {
         state.isLoading = false;
@@ -199,7 +143,7 @@ const settingsSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Upload Avatar
+      // ✅ Upload Avatar
       .addCase(uploadAvatar.pending, (state) => {
         state.isLoading = true;
       })
@@ -213,46 +157,6 @@ const settingsSlice = createSlice({
       .addCase(uploadAvatar.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || 'Failed to upload avatar';
-      })
-      // Notification Settings
-      .addCase(fetchNotificationSettings.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(fetchNotificationSettings.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.notificationSettings = action.payload;
-      })
-      .addCase(fetchNotificationSettings.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.error.message || 'Failed to fetch notification settings';
-      })
-      .addCase(updateNotificationSettings.fulfilled, (state, action) => {
-        state.notificationSettings = action.payload;
-        state.successMessage = 'Notification settings updated';
-      })
-      // Theme Settings
-      .addCase(fetchThemeSettings.fulfilled, (state, action) => {
-        state.themeSettings = action.payload;
-      })
-      .addCase(updateThemeSettings.fulfilled, (state, action) => {
-        state.themeSettings = action.payload;
-        state.successMessage = 'Theme settings updated';
-      })
-      // Inventory Settings
-      .addCase(fetchInventorySettings.fulfilled, (state, action) => {
-        state.inventorySettings = action.payload;
-      })
-      .addCase(updateInventorySettings.fulfilled, (state, action) => {
-        state.inventorySettings = action.payload;
-        state.successMessage = 'Inventory settings updated';
-      })
-      // Preferences
-      .addCase(fetchPreferences.fulfilled, (state, action) => {
-        state.preferences = action.payload;
-      })
-      .addCase(updatePreferences.fulfilled, (state, action) => {
-        state.preferences = action.payload;
-        state.successMessage = 'Preferences updated';
       });
   },
 });

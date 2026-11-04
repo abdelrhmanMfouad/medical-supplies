@@ -1,6 +1,12 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { StockState, StockInDTO, StockOutDTO } from './stock.types';
-import { stockService } from './stockService';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { 
+  StockState, 
+  StockTransaction, 
+  StockInDTO, 
+  StockOutDTO,
+  StockItem
+} from './stock.types';
+import api from '../../services/api';
 
 const initialState: StockState = {
   transactions: [],
@@ -21,102 +27,128 @@ const initialState: StockState = {
     dateFrom: '',
     dateTo: '',
   },
-  currentStock: [],
+  items: [],
 };
 
-// Async Thunks
-export const fetchTransactions = createAsyncThunk(
-  'stock/fetchTransactions',
-  async () => {
-    const response = await stockService.getTransactions();
-    return response;
+// ✅ Fetch Transactions
+export const fetchTransactions = createAsyncThunk<
+  StockTransaction[],
+  void,
+  { rejectValue: string }
+>('stock/fetchTransactions', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<StockTransaction[]>('/stock');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch transactions');
   }
-);
+});
 
-export const fetchTransactionById = createAsyncThunk(
-  'stock/fetchTransactionById',
-  async (id: string) => {
-    const response = await stockService.getTransactionById(id);
-    if (!response) {
-      throw new Error('Transaction not found');
+// ✅ Fetch Transaction By ID
+export const fetchTransactionById = createAsyncThunk<
+  StockTransaction,
+  string,
+  { rejectValue: string }
+>('stock/fetchTransactionById', async (id, { rejectWithValue }) => {
+  try {
+    const response = await api.get<StockTransaction>(`/stock/${id}`);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch transaction');
+  }
+});
+
+// ✅ Stock IN
+export const stockIn = createAsyncThunk<
+  StockTransaction,
+  StockInDTO,
+  { rejectValue: string }
+>('stock/stockIn', async (data, { rejectWithValue }) => {
+  try {
+    console.log('📥 Stock IN data:', data);
+    
+    if (!data.itemId) {
+      return rejectWithValue('Item ID is required');
     }
-    return response;
+    
+    const response = await api.post<StockTransaction>('/stock/in', data);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    console.error('❌ Stock IN error:', err.response?.data);
+    return rejectWithValue(err.response?.data?.message || 'Stock IN failed');
   }
-);
+});
 
-export const stockIn = createAsyncThunk(
-  'stock/stockIn',
-  async (data: StockInDTO, { rejectWithValue }) => {
-    try {
-      const response = await stockService.stockIn(data);
-      return response;
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
-    }
+// ✅ Stock OUT
+export const stockOut = createAsyncThunk<
+  StockTransaction,
+  StockOutDTO,
+  { rejectValue: string }
+>('stock/stockOut', async (data, { rejectWithValue }) => {
+  try {
+    console.log('📤 Stock OUT data:', data);
+    const response = await api.post<StockTransaction>('/stock/out', data);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    console.error('❌ Stock OUT error:', err.response?.data);
+    return rejectWithValue(err.response?.data?.message || 'Stock OUT failed');
   }
-);
+});
 
-export const stockOut = createAsyncThunk(
-  'stock/stockOut',
-  async (data: StockOutDTO, { rejectWithValue }) => {
-    try {
-      const response = await stockService.stockOut(data);
-      return response;
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
-    }
+// ✅ Fetch Items for Dropdown
+export const fetchItemsForDropdown = createAsyncThunk<
+  StockItem[],
+  void,
+  { rejectValue: string }
+>('stock/fetchItemsForDropdown', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<StockItem[]>('/items');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch items');
   }
-);
-
-export const fetchItemsForDropdown = createAsyncThunk(
-  'stock/fetchItemsForDropdown',
-  async () => {
-    const response = await stockService.getItemsForDropdown();
-    return response;
-  }
-);
+});
 
 const stockSlice = createSlice({
   name: 'stock',
   initialState,
   reducers: {
-    setSelectedTransaction: (state, action) => {
+    setSelectedTransaction: (state, action: PayloadAction<StockTransaction | null>) => {
       state.selectedTransaction = action.payload;
     },
     clearSelectedTransaction: (state) => {
       state.selectedTransaction = null;
     },
-    setSearchFilter: (state, action) => {
+    setSearchFilter: (state, action: PayloadAction<string>) => {
       state.filters.search = action.payload;
       state.pagination.currentPage = 1;
     },
-    setTypeFilter: (state, action) => {
+    setTypeFilter: (state, action: PayloadAction<string>) => {
       state.filters.type = action.payload;
       state.pagination.currentPage = 1;
     },
-    setStatusFilter: (state, action) => {
+    setStatusFilter: (state, action: PayloadAction<string>) => {
       state.filters.status = action.payload;
       state.pagination.currentPage = 1;
     },
-    setDateFromFilter: (state, action) => {
+    setDateFromFilter: (state, action: PayloadAction<string>) => {
       state.filters.dateFrom = action.payload;
       state.pagination.currentPage = 1;
     },
-    setDateToFilter: (state, action) => {
+    setDateToFilter: (state, action: PayloadAction<string>) => {
       state.filters.dateTo = action.payload;
       state.pagination.currentPage = 1;
     },
     clearFilters: (state) => {
-      state.filters = {
-        search: '',
-        type: '',
-        status: '',
-        dateFrom: '',
-        dateTo: '',
-      };
+      state.filters = { search: '', type: '', status: '', dateFrom: '', dateTo: '' };
       state.pagination.currentPage = 1;
     },
-    setCurrentPage: (state, action) => {
+    setCurrentPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
     clearError: (state) => {
@@ -132,7 +164,7 @@ const stockSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchTransactions.fulfilled, (state, action) => {
+      .addCase(fetchTransactions.fulfilled, (state, action: PayloadAction<StockTransaction[]>) => {
         state.isLoading = false;
         state.transactions = action.payload;
         state.pagination.totalItems = action.payload.length;
@@ -140,46 +172,57 @@ const stockSlice = createSlice({
       })
       .addCase(fetchTransactions.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Failed to fetch transactions';
+        state.error = action.payload || 'Failed to fetch transactions';
       })
       .addCase(fetchTransactionById.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(fetchTransactionById.fulfilled, (state, action) => {
+      .addCase(fetchTransactionById.fulfilled, (state, action: PayloadAction<StockTransaction>) => {
         state.isLoading = false;
         state.selectedTransaction = action.payload;
       })
       .addCase(fetchTransactionById.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Transaction not found';
+        state.error = action.payload || 'Failed to fetch transaction';
       })
       .addCase(stockIn.pending, (state) => {
         state.isLoading = true;
         state.error = null;
         state.successMessage = null;
       })
-      .addCase(stockIn.fulfilled, (state, action) => {
+      .addCase(stockIn.fulfilled, (state, action: PayloadAction<StockTransaction>) => {
         state.isLoading = false;
         state.transactions.unshift(action.payload);
         state.successMessage = 'Stock IN successful';
       })
       .addCase(stockIn.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.payload || 'Stock IN failed';
       })
       .addCase(stockOut.pending, (state) => {
         state.isLoading = true;
         state.error = null;
         state.successMessage = null;
       })
-      .addCase(stockOut.fulfilled, (state, action) => {
+      .addCase(stockOut.fulfilled, (state, action: PayloadAction<StockTransaction>) => {
         state.isLoading = false;
         state.transactions.unshift(action.payload);
         state.successMessage = 'Stock OUT successful';
       })
       .addCase(stockOut.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.payload || 'Stock OUT failed';
+      })
+      .addCase(fetchItemsForDropdown.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchItemsForDropdown.fulfilled, (state, action: PayloadAction<StockItem[]>) => {
+        state.isLoading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchItemsForDropdown.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to fetch items';
       });
   },
 });

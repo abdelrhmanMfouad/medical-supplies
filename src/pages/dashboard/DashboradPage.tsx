@@ -16,13 +16,11 @@ const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
   const { getUserRoleName } = useRoleAccess();
 
-  // ✅ جلب البيانات من Redux
   const { items } = useSelector((state: RootState) => state.items);
   const { suppliers } = useSelector((state: RootState) => state.suppliers);
   const { transactions } = useSelector((state: RootState) => state.stock);
   const { activeAlerts } = useSelector((state: RootState) => state.alerts);
 
-  // ✅ تحميل البيانات
   useEffect(() => {
     dispatch(fetchItems());
     dispatch(fetchCategories());
@@ -31,25 +29,25 @@ const DashboardPage: React.FC = () => {
     dispatch(fetchActiveAlerts());
   }, [dispatch]);
 
-  // ✅ إحصائيات
   const totalItems = items.length;
   const lowStockItems = items.filter(item => item.quantity <= item.reorderLevel && item.quantity > 0).length;
   const outOfStockItems = items.filter(item => item.quantity === 0).length;
   const totalSuppliers = suppliers.length;
   const criticalAlerts = activeAlerts.filter(a => a.priority === 'CRITICAL').length;
 
-  // ✅ آخر 5 حركات
   const recentTransactions = [...transactions]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
-  // ✅ Menu Items مع إضافة Alerts
+  // ✅ Menu Items مع Reports
   const menuItems = [
     { id: 'items', title: 'Items Management', description: 'Manage inventory items', icon: '📦', path: '/items', color: 'bg-blue-500' },
     { id: 'categories', title: 'Categories', description: 'Manage product categories', icon: '🏷️', path: '/categories', color: 'bg-purple-500' },
     { id: 'suppliers', title: 'Suppliers', description: 'Manage your suppliers', icon: '🏢', path: '/suppliers', color: 'bg-green-500' },
     { id: 'stock', title: 'Stock Management', description: 'Manage inventory movements', icon: '📊', path: '/stock', color: 'bg-orange-500' },
-    { id: 'alerts', title: 'Alerts', description: 'View system alerts', icon: '🔔', path: '/alerts', color: 'bg-red-500' }, // ✅ أضفنا Alerts
+    { id: 'alerts', title: 'Alerts', description: 'View system alerts', icon: '🔔', path: '/alerts', color: 'bg-red-500' },
+    // ✅ Reports Link
+    { id: 'reports', title: 'Reports & Analytics', description: 'View reports and AI predictions', icon: '📈', path: '/reports', color: 'bg-indigo-500' },
     { id: 'settings', title: 'Settings', description: 'Configure preferences', icon: '⚙️', path: '/settings', color: 'bg-gray-500' },
   ];
 
@@ -66,11 +64,10 @@ const DashboardPage: React.FC = () => {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              {/* ✅ عرض عدد التنبيهات في الهيدر */}
               {activeAlerts.length > 0 && (
                 <Link
                   to="/alerts"
-                  className="relative flex items-center gap-2 text-sm bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-3 py-1 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                  className="relative flex items-center gap-2 text-sm bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-3 py-1 rounded-full hover:bg-red-200"
                 >
                   <span>🔔</span>
                   <span>{activeAlerts.length} alerts</span>
@@ -149,15 +146,12 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ✅ Alerts Section - مع Link للصفحة الكاملة */}
+        {/* Alerts Section */}
         <div className="mt-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">🔔 Alerts</h2>
-            <Link
-              to="/alerts"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-            >
-              View all alerts →
+            <Link to="/alerts" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+              View all →
             </Link>
           </div>
           <DashboardAlerts limit={3} />
@@ -182,7 +176,6 @@ const DashboardPage: React.FC = () => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
                 </div>
               </div>
-              {/* ✅ Badge للـ Alerts */}
               {item.id === 'alerts' && activeAlerts.length > 0 && (
                 <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
                   {activeAlerts.length}

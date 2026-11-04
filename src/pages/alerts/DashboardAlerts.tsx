@@ -68,7 +68,7 @@ const DashboardAlerts: React.FC<DashboardAlertsProps> = ({ limit = 3 }) => {
       <div className="space-y-3">
         {displayedAlerts.map((alert) => (
           <AlertCard
-            key={alert.id}
+            key={alert.id}  // ✅ أضف key
             alert={alert}
             onDismiss={dismissAlert}
             onResolve={resolveAlert}

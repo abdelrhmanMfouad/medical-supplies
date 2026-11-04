@@ -94,28 +94,45 @@ export const useItems = () => {
   );
 
   const handleCreateItem = useCallback(
-    async (data: CreateItemDTO) => {
+  async (data: CreateItemDTO) => {
+    try {
       const result = await dispatch(createItem(data)).unwrap();
       return result;
-    },
-    [dispatch]
+    } catch (error) {
+      console.error('Create item error:', error);
+      throw error;
+    }
+  },
+  [dispatch]
   );
 
   const handleUpdateItem = useCallback(
-    async (data: UpdateItemDTO) => {
+  async (data: UpdateItemDTO) => {
+    try {
+      console.log('📝 Updating item with ID:', data.id);
       const result = await dispatch(updateItem(data)).unwrap();
       return result;
-    },
-    [dispatch]
-  );
+    } catch (error) {
+      console.error('❌ Update error:', error);
+      throw error;
+    }
+  },
+  [dispatch]
+);
 
   const handleDeleteItem = useCallback(
-    async (id: string) => {
+  async (id: string) => {
+    try {
+      console.log('🗑️ Deleting item with ID:', id);
       const result = await dispatch(deleteItem(id)).unwrap();
       return result;
-    },
-    [dispatch]
-  );
+    } catch (error) {
+      console.error('❌ Delete error:', error);
+      throw error;
+    }
+  },
+  [dispatch]
+);
 
   // Filter operations
   const handleSearch = useCallback(

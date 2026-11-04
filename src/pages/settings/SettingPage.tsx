@@ -1,122 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useSettings } from './useSettings';
 import ProfileSettings from './ProfileSettings';
-import PasswordSettings from './PasswordSettings';
-import NotificationSettings from './NotificationSettings';
-import ThemeSettings from './ThemeSettings';
-import InventorySettings from './InventorySettings';
-import PreferencesSettings from './PreferencesSettings';
-import { 
-  PasswordUpdateData, 
-  NotificationSettings as NotificationSettingsType,
-  ThemeSettings as ThemeSettingsType,
-  InventorySettings as InventorySettingsType,
-  Preferences as PreferencesType
-} from './settings.types';
+// import PasswordSettings from './PasswordSettings';  // ✅ معلق
 
-type TabType = 'profile' | 'password' | 'notifications' | 'theme' | 'inventory' | 'preferences';
+type TabType = 'profile' | 'password';
 
 const SettingsPage: React.FC = () => {
   const {
     profile,
-    notificationSettings,
-    themeSettings,
-    inventorySettings,
-    preferences,
     isLoading,
     error,
     successMessage,
     loadProfile,
-    loadNotificationSettings,
-    loadThemeSettings,
-    loadInventorySettings,
-    loadPreferences,
     updateProfile,
-    updatePassword,
+    // updatePassword,   // ✅ معلق
     uploadAvatar,
-    updateNotificationSettings,
-    updateThemeSettings,
-    updateInventorySettings,
-    updatePreferences,
     clearError,
     clearSuccessMessage,
   } = useSettings();
 
   const [activeTab, setActiveTab] = useState<TabType>('profile');
 
-  // ✅ Handler functions with proper types
-  const handleUpdatePassword = async (data: PasswordUpdateData): Promise<void> => {
-    await updatePassword(data);
-  };
-
-  const handleUpdateNotificationSettings = async (settings: NotificationSettingsType): Promise<void> => {
-    await updateNotificationSettings(settings);
-  };
-
-  const handleUpdateThemeSettings = async (settings: ThemeSettingsType): Promise<void> => {
-    await updateThemeSettings(settings);
-  };
-
-  const handleUpdateInventorySettings = async (settings: InventorySettingsType): Promise<void> => {
-    await updateInventorySettings(settings);
-  };
-
-  const handleUpdatePreferences = async (settings: PreferencesType): Promise<void> => {
-    await updatePreferences(settings);
-  };
-
-  // ✅ تطبيق الثيم فوراً
-  useEffect(() => {
-    const applyTheme = (theme: string): void => {
-      const html = document.documentElement;
-      if (theme === 'dark') {
-        html.classList.add('dark');
-      } else {
-        html.classList.remove('dark');
-      }
-    };
-
-    if (themeSettings) {
-      applyTheme(themeSettings.theme);
-    }
-  }, [themeSettings]);
-
-  // ✅ تطبيق حجم الخط فوراً
-  useEffect(() => {
-    const applyFontSize = (size: string): void => {
-      const html = document.documentElement;
-      const fontSize = size === 'small' ? '14px' : size === 'large' ? '18px' : '16px';
-      html.style.fontSize = fontSize;
-    };
-
-    if (themeSettings) {
-      applyFontSize(themeSettings.fontSize);
-    }
-  }, [themeSettings]);
-
-  // ✅ تطبيق الـ Compact View
-  useEffect(() => {
-    const applyCompact = (compact: boolean): void => {
-      const html = document.documentElement;
-      if (compact) {
-        html.classList.add('compact');
-      } else {
-        html.classList.remove('compact');
-      }
-    };
-
-    if (themeSettings) {
-      applyCompact(themeSettings.compactView);
-    }
-  }, [themeSettings]);
-
   useEffect(() => {
     loadProfile();
-    loadNotificationSettings();
-    loadThemeSettings();
-    loadInventorySettings();
-    loadPreferences();
-  }, [loadProfile, loadNotificationSettings, loadThemeSettings, loadInventorySettings, loadPreferences]);
+  }, [loadProfile]);
 
   useEffect(() => {
     if (successMessage) {
@@ -132,13 +39,10 @@ const SettingsPage: React.FC = () => {
     }
   }, [error, clearError]);
 
+  // ✅ tabs - بس Profile
   const tabs: { id: TabType; name: string; icon: string }[] = [
     { id: 'profile', name: 'Profile', icon: '👤' },
-    { id: 'password', name: 'Password', icon: '🔒' },
-    { id: 'notifications', name: 'Notifications', icon: '🔔' },
-    { id: 'theme', name: 'Theme', icon: '🎨' },
-    { id: 'inventory', name: 'Inventory', icon: '📦' },
-    { id: 'preferences', name: 'Preferences', icon: '⚙️' },
+    // { id: 'password', name: 'Password', icon: '🔒' },  // ✅ معلق
   ];
 
   return (
@@ -146,7 +50,7 @@ const SettingsPage: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 shadow transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Settings</h1>
-          <p className="text-gray-500 dark:text-gray-400">Manage your account preferences and system settings</p>
+          <p className="text-gray-500 dark:text-gray-400">Manage your account settings</p>
         </div>
       </div>
 
@@ -168,6 +72,7 @@ const SettingsPage: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
+          {/* Sidebar Tabs */}
           <div className="w-full md:w-64 bg-white dark:bg-gray-800 rounded-lg shadow p-2 transition-colors duration-300">
             {tabs.map((tab) => (
               <button
@@ -195,44 +100,13 @@ const SettingsPage: React.FC = () => {
               />
             )}
 
-            {activeTab === 'password' && (
+            {/* ✅ Password Tab - معلق */}
+            {/* {activeTab === 'password' && (
               <PasswordSettings
-                onUpdate={handleUpdatePassword}
+                onUpdate={updatePassword}
                 isLoading={isLoading}
               />
-            )}
-
-            {activeTab === 'notifications' && (
-              <NotificationSettings
-                settings={notificationSettings}
-                onUpdate={handleUpdateNotificationSettings}
-                isLoading={isLoading}
-              />
-            )}
-
-            {activeTab === 'theme' && (
-              <ThemeSettings
-                settings={themeSettings}
-                onUpdate={handleUpdateThemeSettings}
-                isLoading={isLoading}
-              />
-            )}
-
-            {activeTab === 'inventory' && (
-              <InventorySettings
-                settings={inventorySettings}
-                onUpdate={handleUpdateInventorySettings}
-                isLoading={isLoading}
-              />
-            )}
-
-            {activeTab === 'preferences' && (
-              <PreferencesSettings
-                settings={preferences}
-                onUpdate={handleUpdatePreferences}
-                isLoading={isLoading}
-              />
-            )}
+            )} */}
           </div>
         </div>
       </div>

@@ -72,7 +72,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
                 <div className="flex items-center">
                   <div className="shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                     <span className="text-blue-600 font-medium">
-                      {item.name.charAt(0).toUpperCase()}
+                      {item.name?.charAt(0)?.toUpperCase() || '?'}
                     </span>
                   </div>
                   <div className="ml-4">
@@ -85,13 +85,13 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
                 {item.sku}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {item.category}
+                {item.category || 'N/A'}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {item.quantity} {item.unit}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                ${item.unitPrice.toFixed(2)}
+                ${item.unitPrice?.toFixed(2) || '0.00'}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStockStatusColor(item.status)}`}>

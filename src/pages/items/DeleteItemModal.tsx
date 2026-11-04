@@ -18,6 +18,7 @@ const DeleteItemModal: React.FC<DeleteItemModalProps> = ({
 }) => {
   const handleDelete = async () => {
     if (item) {
+      console.log('🗑️ Delete confirmed for item ID:', item.id);
       await onDelete(item.id);
     }
   };

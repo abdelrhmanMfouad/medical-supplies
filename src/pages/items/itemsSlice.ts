@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { ItemsState, CreateItemDTO, UpdateItemDTO } from './items.types';
-import { itemsService } from './itemsService';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { ItemsState, Item, CreateItemDTO, UpdateItemDTO, Category, Supplier } from './items.types';
+import api from '../../services/api';
 
 const initialState: ItemsState = {
   items: [],
@@ -23,97 +23,143 @@ const initialState: ItemsState = {
   suppliers: [],
 };
 
-// Async Thunks
-export const fetchItems = createAsyncThunk(
-  'items/fetchItems',
-  async () => {
-    const response = await itemsService.getItems();
-    return response;
+// ✅ Fetch Items - من الـ Backend الحقيقي
+export const fetchItems = createAsyncThunk<
+  Item[],
+  void,
+  { rejectValue: string }
+>('items/fetchItems', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<Item[]>('/items');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch items');
   }
-);
+});
 
-export const fetchItemById = createAsyncThunk(
-  'items/fetchItemById',
-  async (id: string) => {
-    const response = await itemsService.getItemById(id);
-    if (!response) {
-      throw new Error('Item not found');
-    }
-    return response;
+// ✅ Fetch Item By ID - من الـ Backend الحقيقي
+export const fetchItemById = createAsyncThunk<
+  Item,
+  string,
+  { rejectValue: string }
+>('items/fetchItemById', async (id, { rejectWithValue }) => {
+  try {
+    const response = await api.get<Item>(`/items/${id}`);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch item');
   }
-);
+});
 
-export const createItem = createAsyncThunk(
-  'items/createItem',
-  async (data: CreateItemDTO, { rejectWithValue }) => {
-    try {
-      const response = await itemsService.createItem(data);
-      return response;
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
-    }
+// ✅ Fetch Categories - من الـ Backend الحقيقي
+export const fetchCategories = createAsyncThunk<
+  Category[],
+  void,
+  { rejectValue: string }
+>('items/fetchCategories', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<Category[]>('/categories');
+    const categories = response.data.map((cat: Category & { _id?: string }) => ({
+      id: cat._id || cat.id,
+      name: cat.name,
+    }));
+    return categories;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch categories');
   }
-);
+});
 
-export const updateItem = createAsyncThunk(
-  'items/updateItem',
-  async (data: UpdateItemDTO, { rejectWithValue }) => {
-    try {
-      const response = await itemsService.updateItem(data);
-      return response;
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
-    }
+// ✅ Fetch Suppliers - من الـ Backend الحقيقي
+export const fetchSuppliers = createAsyncThunk<
+  Supplier[],
+  void,
+  { rejectValue: string }
+>('items/fetchSuppliers', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<Supplier[]>('/suppliers');
+    const suppliers = response.data.map((sup: Supplier & { _id?: string }) => ({
+      ...sup,
+      id: sup._id || sup.id,
+    }));
+    return suppliers;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch suppliers');
   }
-);
+});
 
-export const deleteItem = createAsyncThunk(
-  'items/deleteItem',
-  async (id: string, { rejectWithValue }) => {
-    try {
-      const response = await itemsService.deleteItem(id);
-      return { id, ...response };
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
-    }
+// ✅ Create Item - من الـ Backend الحقيقي
+export const createItem = createAsyncThunk<
+  Item,
+  CreateItemDTO,
+  { rejectValue: string }
+>('items/createItem', async (data, { rejectWithValue }) => {
+  try {
+    console.log('📦 Creating item with data:', data);
+    const response = await api.post<Item>('/items', data);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    console.error('❌ Create item error:', err.response?.data);
+    return rejectWithValue(err.response?.data?.message || 'Failed to create item');
   }
-);
+});
 
-export const fetchCategories = createAsyncThunk(
-  'items/fetchCategories',
-  async () => {
-    const response = await itemsService.getCategories();
-    return response;
+// ✅ Update Item - من الـ Backend الحقيقي
+export const updateItem = createAsyncThunk<
+  Item,
+  UpdateItemDTO,
+  { rejectValue: string }
+>('items/updateItem', async (data, { rejectWithValue }) => {
+  try {
+    console.log('📝 Updating item with data:', data);
+    const response = await api.put<Item>(`/items/${data.id}`, data);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to update item');
   }
-);
+});
 
-export const fetchSuppliers = createAsyncThunk(
-  'items/fetchSuppliers',
-  async () => {
-    const response = await itemsService.getSuppliers();
-    return response;
+// ✅ Delete Item - من الـ Backend الحقيقي
+export const deleteItem = createAsyncThunk<
+  { id: string },
+  string,
+  { rejectValue: string }
+>('items/deleteItem', async (id, { rejectWithValue }) => {
+  try {
+    console.log('🗑️ Deleting item with ID:', id);
+    await api.delete(`/items/${id}`);
+    return { id };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    console.error('❌ Delete item error:', err.response?.data);
+    return rejectWithValue(err.response?.data?.message || 'Failed to delete item');
   }
-);
+});
 
 const itemsSlice = createSlice({
   name: 'items',
   initialState,
   reducers: {
-    setSelectedItem: (state, action) => {
+    setSelectedItem: (state, action: PayloadAction<Item | null>) => {
       state.selectedItem = action.payload;
     },
     clearSelectedItem: (state) => {
       state.selectedItem = null;
     },
-    setSearchFilter: (state, action) => {
+    setSearchFilter: (state, action: PayloadAction<string>) => {
       state.filters.search = action.payload;
       state.pagination.currentPage = 1;
     },
-    setCategoryFilter: (state, action) => {
+    setCategoryFilter: (state, action: PayloadAction<string>) => {
       state.filters.category = action.payload;
       state.pagination.currentPage = 1;
     },
-    setStatusFilter: (state, action) => {
+    setStatusFilter: (state, action: PayloadAction<string>) => {
       state.filters.status = action.payload;
       state.pagination.currentPage = 1;
     },
@@ -121,7 +167,7 @@ const itemsSlice = createSlice({
       state.filters = { search: '', category: '', status: '' };
       state.pagination.currentPage = 1;
     },
-    setCurrentPage: (state, action) => {
+    setCurrentPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
     clearError: (state) => {
@@ -133,12 +179,11 @@ const itemsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Items
       .addCase(fetchItems.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchItems.fulfilled, (state, action) => {
+      .addCase(fetchItems.fulfilled, (state, action: PayloadAction<Item[]>) => {
         state.isLoading = false;
         state.items = action.payload;
         state.pagination.totalItems = action.payload.length;
@@ -146,27 +191,25 @@ const itemsSlice = createSlice({
       })
       .addCase(fetchItems.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Failed to fetch items';
+        state.error = action.payload || 'Failed to fetch items';
       })
-      // Fetch Item By ID
       .addCase(fetchItemById.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(fetchItemById.fulfilled, (state, action) => {
+      .addCase(fetchItemById.fulfilled, (state, action: PayloadAction<Item>) => {
         state.isLoading = false;
         state.selectedItem = action.payload;
       })
       .addCase(fetchItemById.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Item not found';
+        state.error = action.payload || 'Failed to fetch item';
       })
-      // Create Item
       .addCase(createItem.pending, (state) => {
         state.isLoading = true;
         state.error = null;
         state.successMessage = null;
       })
-      .addCase(createItem.fulfilled, (state, action) => {
+      .addCase(createItem.fulfilled, (state, action: PayloadAction<Item>) => {
         state.isLoading = false;
         state.items.unshift(action.payload);
         state.pagination.totalItems = state.items.length;
@@ -174,15 +217,14 @@ const itemsSlice = createSlice({
       })
       .addCase(createItem.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.payload || 'Failed to create item';
       })
-      // Update Item
       .addCase(updateItem.pending, (state) => {
         state.isLoading = true;
         state.error = null;
         state.successMessage = null;
       })
-      .addCase(updateItem.fulfilled, (state, action) => {
+      .addCase(updateItem.fulfilled, (state, action: PayloadAction<Item>) => {
         state.isLoading = false;
         const index = state.items.findIndex(i => i.id === action.payload.id);
         if (index !== -1) {
@@ -193,31 +235,28 @@ const itemsSlice = createSlice({
       })
       .addCase(updateItem.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.payload || 'Failed to update item';
       })
-      // Delete Item
       .addCase(deleteItem.pending, (state) => {
         state.isLoading = true;
         state.error = null;
         state.successMessage = null;
       })
-      .addCase(deleteItem.fulfilled, (state, action) => {
+      .addCase(deleteItem.fulfilled, (state, action: PayloadAction<{ id: string }>) => {
         state.isLoading = false;
         state.items = state.items.filter(i => i.id !== action.payload.id);
         state.pagination.totalItems = state.items.length;
         state.selectedItem = null;
-        state.successMessage = action.payload.message;
+        state.successMessage = 'Item deleted successfully';
       })
       .addCase(deleteItem.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.payload || 'Failed to delete item';
       })
-      // Fetch Categories
-      .addCase(fetchCategories.fulfilled, (state, action) => {
+      .addCase(fetchCategories.fulfilled, (state, action: PayloadAction<Category[]>) => {
         state.categories = action.payload;
       })
-      // Fetch Suppliers
-      .addCase(fetchSuppliers.fulfilled, (state, action) => {
+      .addCase(fetchSuppliers.fulfilled, (state, action: PayloadAction<Supplier[]>) => {
         state.suppliers = action.payload;
       });
   },

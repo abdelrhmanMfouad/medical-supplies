@@ -23,7 +23,10 @@ const StockInForm: React.FC<StockInFormProps> = ({
     notes: '',
   });
   const [errors, setErrors] = useState<StockInErrors>({});
-  const selectedItem = items.find(i => i.id === formData.itemId) ?? null;
+
+  const selectedItem = formData.itemId 
+    ? items.find(i => i.id === formData.itemId) ? { name: items.find(i => i.id === formData.itemId)!.name, unit: items.find(i => i.id === formData.itemId)!.unit } : null
+    : null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -38,18 +41,25 @@ const StockInForm: React.FC<StockInFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📤 StockInForm submitting:', formData);
+
     const validationErrors = validateStockIn(formData);
     setErrors(validationErrors);
     
     if (Object.keys(validationErrors).length === 0) {
-      await onSubmit(formData);
+      try {
+        await onSubmit(formData);
+        console.log('✅ StockInForm submitted successfully');
+      } catch (error) {
+        console.error('❌ StockInForm submit error:', error);
+      }
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Select Item *
         </label>
         <select
@@ -57,8 +67,8 @@ const StockInForm: React.FC<StockInFormProps> = ({
           value={formData.itemId}
           onChange={handleChange}
           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
-            errors.itemId ? 'border-red-500' : 'border-gray-300'
-          }`}
+            errors.itemId ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+          } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
         >
           <option value="">Select an item...</option>
           {items.map((item) => (
@@ -71,8 +81,8 @@ const StockInForm: React.FC<StockInFormProps> = ({
       </div>
 
       {selectedItem && (
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <p className="text-sm text-blue-700">
+        <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
             Adding stock for: <strong>{selectedItem.name}</strong>
           </p>
         </div>
@@ -80,7 +90,7 @@ const StockInForm: React.FC<StockInFormProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Quantity *
           </label>
           <input
@@ -90,17 +100,14 @@ const StockInForm: React.FC<StockInFormProps> = ({
             onChange={handleChange}
             min="1"
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
-              errors.quantity ? 'border-red-500' : 'border-gray-300'
-            }`}
+              errors.quantity ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+            } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
           />
           {errors.quantity && <p className="mt-1 text-xs text-red-600">{errors.quantity}</p>}
-          {selectedItem && (
-            <p className="mt-1 text-xs text-gray-500">Unit: {selectedItem.unit}</p>
-          )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Unit Price *
           </label>
           <input
@@ -111,15 +118,15 @@ const StockInForm: React.FC<StockInFormProps> = ({
             min="0"
             step="0.01"
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
-              errors.unitPrice ? 'border-red-500' : 'border-gray-300'
-            }`}
+              errors.unitPrice ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+            } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
           />
           {errors.unitPrice && <p className="mt-1 text-xs text-red-600">{errors.unitPrice}</p>}
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Reference (Optional)
         </label>
         <input
@@ -127,13 +134,13 @@ const StockInForm: React.FC<StockInFormProps> = ({
           name="reference"
           value={formData.reference}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           placeholder="e.g., PO-12345"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Notes (Optional)
         </label>
         <textarea
@@ -141,7 +148,7 @@ const StockInForm: React.FC<StockInFormProps> = ({
           value={formData.notes}
           onChange={handleChange}
           rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           placeholder="Any additional notes..."
         />
       </div>
@@ -157,7 +164,7 @@ const StockInForm: React.FC<StockInFormProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           Cancel
         </button>

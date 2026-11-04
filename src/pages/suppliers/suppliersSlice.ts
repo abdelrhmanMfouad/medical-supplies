@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { SuppliersState, CreateSupplierDTO, UpdateSupplierDTO } from './suppliers.types';
-import { suppliersService } from './suppliersService';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { SuppliersState, Supplier, CreateSupplierDTO, UpdateSupplierDTO } from './suppliers.types';
+import api from '../../services/api';
 
 const initialState: SuppliersState = {
   suppliers: [],
@@ -20,76 +20,96 @@ const initialState: SuppliersState = {
   },
 };
 
-export const fetchSuppliers = createAsyncThunk(
-  'suppliers/fetchSuppliers',
-  async () => {
-    const response = await suppliersService.getSuppliers();
-    return response;
+// ✅ Fetch Suppliers
+export const fetchSuppliers = createAsyncThunk<
+  Supplier[],
+  void,
+  { rejectValue: string }
+>('suppliers/fetchSuppliers', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<Supplier[]>('/suppliers');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch suppliers');
   }
-);
+});
 
-export const fetchSupplierById = createAsyncThunk(
-  'suppliers/fetchSupplierById',
-  async (id: string) => {
-    const response = await suppliersService.getSupplierById(id);
-    if (!response) {
-      throw new Error('Supplier not found');
-    }
-    return response;
+// ✅ Fetch Supplier By ID (أضف هذا)
+export const fetchSupplierById = createAsyncThunk<
+  Supplier,
+  string,
+  { rejectValue: string }
+>('suppliers/fetchSupplierById', async (id, { rejectWithValue }) => {
+  try {
+    const response = await api.get<Supplier>(`/suppliers/${id}`);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to fetch supplier');
   }
-);
+});
 
-export const createSupplier = createAsyncThunk(
-  'suppliers/createSupplier',
-  async (data: CreateSupplierDTO, { rejectWithValue }) => {
-    try {
-      const response = await suppliersService.createSupplier(data);
-      return response;
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
-    }
+// ✅ Create Supplier
+export const createSupplier = createAsyncThunk<
+  Supplier,
+  CreateSupplierDTO,
+  { rejectValue: string }
+>('suppliers/createSupplier', async (data, { rejectWithValue }) => {
+  try {
+    const response = await api.post<Supplier>('/suppliers', data);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to create supplier');
   }
-);
+});
 
-export const updateSupplier = createAsyncThunk(
-  'suppliers/updateSupplier',
-  async (data: UpdateSupplierDTO, { rejectWithValue }) => {
-    try {
-      const response = await suppliersService.updateSupplier(data);
-      return response;
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
-    }
+// ✅ Update Supplier
+export const updateSupplier = createAsyncThunk<
+  Supplier,
+  UpdateSupplierDTO,
+  { rejectValue: string }
+>('suppliers/updateSupplier', async (data, { rejectWithValue }) => {
+  try {
+    const response = await api.put<Supplier>(`/suppliers/${data.id}`, data);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to update supplier');
   }
-);
+});
 
-export const deleteSupplier = createAsyncThunk(
-  'suppliers/deleteSupplier',
-  async (id: string, { rejectWithValue }) => {
-    try {
-      const response = await suppliersService.deleteSupplier(id);
-      return { id, ...response };
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
-    }
+// ✅ Delete Supplier
+export const deleteSupplier = createAsyncThunk<
+  { id: string },
+  string,
+  { rejectValue: string }
+>('suppliers/deleteSupplier', async (id, { rejectWithValue }) => {
+  try {
+    await api.delete(`/suppliers/${id}`);
+    return { id };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue(err.response?.data?.message || 'Failed to delete supplier');
   }
-);
+});
 
 const suppliersSlice = createSlice({
   name: 'suppliers',
   initialState,
   reducers: {
-    setSelectedSupplier: (state, action) => {
+    setSelectedSupplier: (state, action: PayloadAction<Supplier | null>) => {
       state.selectedSupplier = action.payload;
     },
     clearSelectedSupplier: (state) => {
       state.selectedSupplier = null;
     },
-    setSearchFilter: (state, action) => {
+    setSearchFilter: (state, action: PayloadAction<string>) => {
       state.filters.search = action.payload;
       state.pagination.currentPage = 1;
     },
-    setStatusFilter: (state, action) => {
+    setStatusFilter: (state, action: PayloadAction<string>) => {
       state.filters.status = action.payload;
       state.pagination.currentPage = 1;
     },
@@ -97,7 +117,7 @@ const suppliersSlice = createSlice({
       state.filters = { search: '', status: '' };
       state.pagination.currentPage = 1;
     },
-    setCurrentPage: (state, action) => {
+    setCurrentPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
     clearError: (state) => {
@@ -113,7 +133,7 @@ const suppliersSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchSuppliers.fulfilled, (state, action) => {
+      .addCase(fetchSuppliers.fulfilled, (state, action: PayloadAction<Supplier[]>) => {
         state.isLoading = false;
         state.suppliers = action.payload;
         state.pagination.totalItems = action.payload.length;
@@ -121,40 +141,26 @@ const suppliersSlice = createSlice({
       })
       .addCase(fetchSuppliers.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Failed to fetch suppliers';
+        state.error = action.payload || 'Failed to fetch suppliers';
       })
       .addCase(fetchSupplierById.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(fetchSupplierById.fulfilled, (state, action) => {
+      .addCase(fetchSupplierById.fulfilled, (state, action: PayloadAction<Supplier>) => {
         state.isLoading = false;
         state.selectedSupplier = action.payload;
       })
       .addCase(fetchSupplierById.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Supplier not found';
+        state.error = action.payload || 'Failed to fetch supplier';
       })
-      .addCase(createSupplier.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-        state.successMessage = null;
-      })
-      .addCase(createSupplier.fulfilled, (state, action) => {
+      .addCase(createSupplier.fulfilled, (state, action: PayloadAction<Supplier>) => {
         state.isLoading = false;
         state.suppliers.unshift(action.payload);
         state.pagination.totalItems = state.suppliers.length;
         state.successMessage = 'Supplier created successfully';
       })
-      .addCase(createSupplier.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(updateSupplier.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-        state.successMessage = null;
-      })
-      .addCase(updateSupplier.fulfilled, (state, action) => {
+      .addCase(updateSupplier.fulfilled, (state, action: PayloadAction<Supplier>) => {
         state.isLoading = false;
         const index = state.suppliers.findIndex(s => s.id === action.payload.id);
         if (index !== -1) {
@@ -163,25 +169,12 @@ const suppliersSlice = createSlice({
         state.selectedSupplier = action.payload;
         state.successMessage = 'Supplier updated successfully';
       })
-      .addCase(updateSupplier.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(deleteSupplier.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-        state.successMessage = null;
-      })
-      .addCase(deleteSupplier.fulfilled, (state, action) => {
+      .addCase(deleteSupplier.fulfilled, (state, action: PayloadAction<{ id: string }>) => {
         state.isLoading = false;
         state.suppliers = state.suppliers.filter(s => s.id !== action.payload.id);
         state.pagination.totalItems = state.suppliers.length;
         state.selectedSupplier = null;
-        state.successMessage = action.payload.message;
-      })
-      .addCase(deleteSupplier.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
+        state.successMessage = 'Supplier deleted successfully';
       });
   },
 });

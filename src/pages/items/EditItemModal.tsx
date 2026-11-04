@@ -1,4 +1,4 @@
-import React, { useState, useEffect, startTransition } from 'react';
+import React, { useState } from 'react';
 import { Item, Category, Supplier, UpdateItemDTO } from './items.types';
 import { validateItem, ItemErrors } from './itemsValidation';
 
@@ -12,6 +12,27 @@ interface EditItemModalProps {
   onClose: () => void;
 }
 
+// ✅ دالة لتنسيق التاريخ
+const formatDateForInput = (date: string | undefined): string => {
+  if (!date) return '';
+  return date.split('T')[0];
+};
+
+const defaultFormData: UpdateItemDTO = {
+  id: '',
+  name: '',
+  sku: '',
+  categoryId: '',
+  quantity: 0,
+  unit: 'pcs',
+  unitPrice: 0,
+  reorderLevel: 0,
+  location: '',
+  supplierId: '',
+  expiryDate: '',
+  description: '',
+};
+
 const EditItemModal: React.FC<EditItemModalProps> = ({
   item,
   isOpen,
@@ -21,27 +42,11 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   isLoading,
   onClose,
 }) => {
-  const [formData, setFormData] = useState<Required<UpdateItemDTO>>({
-    id: '',
-    name: '',
-    sku: '',
-    categoryId: '',
-    quantity: 0,
-    unit: 'pcs',
-    unitPrice: 0,
-    reorderLevel: 0,
-    location: '',
-    supplierId: '',
-    expiryDate: '',
-    description: '',
-  });
+  const [formData, setFormData] = useState<UpdateItemDTO>(defaultFormData);
   const [errors, setErrors] = useState<ItemErrors>({});
 
-  useEffect(() => {
-    if (!item) return;
-
-    startTransition(() => {
-      setFormData({
+  const itemFormData: UpdateItemDTO = item
+    ? {
         id: item.id,
         name: item.name,
         sku: item.sku,
@@ -52,32 +57,54 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
         reorderLevel: item.reorderLevel,
         location: item.location,
         supplierId: item.supplierId,
-        expiryDate: item.expiryDate || '',
+        expiryDate: formatDateForInput(item.expiryDate),
         description: item.description || '',
-      });
-    });
-  }, [item]);
+      }
+    : defaultFormData;
+
+  const currentFormData = item && formData.id !== item.id ? itemFormData : formData;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'quantity' || name === 'unitPrice' || name === 'reorderLevel' 
-        ? parseFloat(value) || 0 
-        : value
-    }));
+    const convertedValue =
+      name === 'quantity' || name === 'unitPrice' || name === 'reorderLevel'
+        ? parseFloat(value) || 0
+        : value;
+
+    setFormData(prev => {
+      const base = item && prev.id !== item.id ? itemFormData : prev;
+      return {
+        ...base,
+        [name]: convertedValue,
+      };
+    });
+
     if (errors[name as keyof ItemErrors]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const validationErrors = validateItem(formData);
+
+    const validationPayload = {
+      name: currentFormData.name ?? '',
+      sku: currentFormData.sku ?? '',
+      categoryId: currentFormData.categoryId ?? '',
+      quantity: currentFormData.quantity ?? 0,
+      unit: currentFormData.unit ?? '',
+      unitPrice: currentFormData.unitPrice ?? 0,
+      reorderLevel: currentFormData.reorderLevel ?? 0,
+      location: currentFormData.location ?? '',
+      supplierId: currentFormData.supplierId ?? '',
+      expiryDate: currentFormData.expiryDate,
+    };
+
+    const validationErrors = validateItem(validationPayload);
     setErrors(validationErrors);
-    
-    if (Object.keys(validationErrors).length === 0 && formData.id) {
-      await onUpdate(formData);
+
+    if (Object.keys(validationErrors).length === 0 && currentFormData.id) {
+      await onUpdate(currentFormData);
     }
   };
 
@@ -93,10 +120,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
         <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl z-10">
           <div className="flex items-center justify-between p-4 border-b">
             <h3 className="text-lg font-semibold text-gray-900">Edit Item</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
-            >
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -107,15 +131,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Item Name *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                       errors.name ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
@@ -123,15 +145,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SKU *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU *</label>
                   <input
                     type="text"
                     name="sku"
                     value={formData.sku}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                       errors.sku ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
@@ -141,14 +161,12 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                   <select
                     name="categoryId"
                     value={formData.categoryId}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                       errors.categoryId ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
@@ -161,14 +179,12 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Supplier *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
                   <select
                     name="supplierId"
                     value={formData.supplierId}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                       errors.supplierId ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
@@ -183,15 +199,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
                   <input
                     type="number"
                     name="quantity"
                     value={formData.quantity}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                       errors.quantity ? 'border-red-500' : 'border-gray-300'
                     }`}
                     min="0"
@@ -200,14 +214,12 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Unit *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit *</label>
                   <select
                     name="unit"
                     value={formData.unit}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                       errors.unit ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
@@ -219,15 +231,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Unit Price *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price *</label>
                   <input
                     type="number"
                     name="unitPrice"
                     value={formData.unitPrice}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                       errors.unitPrice ? 'border-red-500' : 'border-gray-300'
                     }`}
                     min="0"
@@ -239,15 +249,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Reorder Level *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reorder Level *</label>
                   <input
                     type="number"
                     name="reorderLevel"
                     value={formData.reorderLevel}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                       errors.reorderLevel ? 'border-red-500' : 'border-gray-300'
                     }`}
                     min="0"
@@ -256,15 +264,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Location *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
                   <input
                     type="text"
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                       errors.location ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
@@ -273,15 +279,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Expiry Date (Optional)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date (Optional)</label>
                 <input
                   type="date"
                   name="expiryDate"
                   value={formData.expiryDate}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
                     errors.expiryDate ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -289,15 +293,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description (Optional)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                 />
               </div>
 

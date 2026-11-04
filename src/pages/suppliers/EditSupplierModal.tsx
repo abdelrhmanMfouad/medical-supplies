@@ -1,8 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Supplier, UpdateSupplierDTO } from './suppliers.types';
 import { validateSupplier, SupplierErrors } from './suppliersValidation';
 
-type SupplierFormData = UpdateSupplierDTO & {
+interface EditSupplierModalProps {
+  supplier: Supplier | null;
+  isOpen: boolean;
+  onUpdate: (data: UpdateSupplierDTO) => Promise<void>;
+  isLoading: boolean;
+  onClose: () => void;
+}
+
+type SupplierFormData = {
   id: string;
   name: string;
   contactPerson: string;
@@ -18,30 +26,6 @@ type SupplierFormData = UpdateSupplierDTO & {
   status: 'active' | 'inactive';
 };
 
-const getInitialFormData = (supplier?: Supplier | null): SupplierFormData => ({
-  id: supplier?.id ?? '',
-  name: supplier?.name ?? '',
-  contactPerson: supplier?.contactPerson ?? '',
-  email: supplier?.email ?? '',
-  phone: supplier?.phone ?? '',
-  address: supplier?.address ?? '',
-  city: supplier?.city ?? '',
-  country: supplier?.country ?? '',
-  postalCode: supplier?.postalCode ?? '',
-  taxId: supplier?.taxId ?? '',
-  website: supplier?.website ?? '',
-  notes: supplier?.notes ?? '',
-  status: supplier?.status ?? 'active',
-});
-
-interface EditSupplierModalProps {
-  supplier: Supplier | null;
-  isOpen: boolean;
-  onUpdate: (data: UpdateSupplierDTO) => Promise<void>;
-  isLoading: boolean;
-  onClose: () => void;
-}
-
 const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
   supplier,
   isOpen,
@@ -49,25 +33,63 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
   isLoading,
   onClose,
 }) => {
-  const [formData, setFormData] = useState<SupplierFormData>(() => getInitialFormData(supplier));
+  const getSupplierFormData = (supplier: Supplier): SupplierFormData => ({
+    id: supplier.id,
+    name: supplier.name,
+    contactPerson: supplier.contactPerson,
+    email: supplier.email,
+    phone: supplier.phone,
+    address: supplier.address,
+    city: supplier.city,
+    country: supplier.country,
+    postalCode: supplier.postalCode,
+    taxId: supplier.taxId || '',
+    website: supplier.website || '',
+    notes: supplier.notes || '',
+    status: supplier.status,
+  });
+
+  const defaultFormData: SupplierFormData = {
+    id: '',
+    name: '',
+    contactPerson: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    country: '',
+    postalCode: '',
+    taxId: '',
+    website: '',
+    notes: '',
+    status: 'active',
+  };
+
+  const [formData, setFormData] = useState<SupplierFormData>(
+    supplier ? getSupplierFormData(supplier) : defaultFormData
+  );
   const [errors, setErrors] = useState<SupplierErrors>({});
 
   useEffect(() => {
-    if (supplier && supplier.id !== formData.id) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFormData(getInitialFormData(supplier));
-    }
+    if (!supplier || supplier.id === formData.id) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFormData(getSupplierFormData(supplier));
   }, [supplier, formData.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const fieldName = name as keyof SupplierFormData;
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: fieldName === 'status' ? (value as 'active' | 'inactive') : value,
+    } as SupplierFormData));
+
     if (errors[name as keyof SupplierErrors]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const validationErrors = validateSupplier(formData);
     setErrors(validationErrors);

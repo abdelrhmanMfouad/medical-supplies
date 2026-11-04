@@ -37,6 +37,14 @@ export interface StockOutDTO {
   notes?: string;
 }
 
+export interface StockItem {
+  id: string;
+  name: string;
+  sku: string;
+  quantity: number;
+  unit: string;
+}
+
 export interface StockState {
   transactions: StockTransaction[];
   selectedTransaction: StockTransaction | null;
@@ -56,8 +64,5 @@ export interface StockState {
     dateFrom: string;
     dateTo: string;
   };
-  currentStock: {
-    itemId: string;
-    quantity: number;
-  }[];
+  items: StockItem[];
 }

@@ -28,7 +28,6 @@ const LoginPage: React.FC = () => {
   const state = location.state as LocationState;
   const from = state?.from?.pathname || '/dashboard';
 
-  // Clear errors on unmount
   useEffect(() => {
     return () => {
       dispatch(clearError());
@@ -135,11 +134,12 @@ const LoginPage: React.FC = () => {
               </label>
             </div>
 
-            <div className="text-sm">
+            {/* ✅ Forgot Password - معلق */}
+            {/* <div className="text-sm">
               <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
                 Forgot password?
               </Link>
-            </div>
+            </div> */}
           </div>
 
           <button
@@ -151,7 +151,7 @@ const LoginPage: React.FC = () => {
           </button>
         </form>
 
-        {/* ✅ Register Link - تحت الفورم */}
+        {/* Register Link */}
         <div className="text-sm text-center">
           <p className="text-gray-600">
             Don't have an account?{' '}

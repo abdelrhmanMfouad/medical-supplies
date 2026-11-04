@@ -30,16 +30,19 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
     expiryDate: '',
     description: '',
   });
+
   const [errors, setErrors] = useState<ItemErrors>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
     setFormData(prev => ({
       ...prev,
       [name]: name === 'quantity' || name === 'unitPrice' || name === 'reorderLevel' 
         ? parseFloat(value) || 0 
         : value
     }));
+    
     if (errors[name as keyof ItemErrors]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
@@ -47,10 +50,14 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('📦 Form Data before submit:', formData);
+
     const validationErrors = validateItem(formData);
     setErrors(validationErrors);
     
     if (Object.keys(validationErrors).length === 0) {
+      // إرسال الداتا كما هي (categoryId و supplierId يجب أن تكون ObjectId strings)
       await onSubmit(formData);
     }
   };
@@ -61,15 +68,13 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Item Name *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
           <input
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
               errors.name ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Enter item name"
@@ -78,15 +83,13 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            SKU *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">SKU *</label>
           <input
             type="text"
             name="sku"
             value={formData.sku}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
               errors.sku ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="e.g., MED-001"
@@ -97,40 +100,40 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Category *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
           <select
             name="categoryId"
             value={formData.categoryId}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
               errors.categoryId ? 'border-red-500' : 'border-gray-300'
             }`}
           >
             <option value="">Select Category</option>
             {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
             ))}
           </select>
           {errors.categoryId && <p className="mt-1 text-xs text-red-600">{errors.categoryId}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Supplier *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
           <select
             name="supplierId"
             value={formData.supplierId}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
               errors.supplierId ? 'border-red-500' : 'border-gray-300'
             }`}
           >
             <option value="">Select Supplier</option>
             {suppliers.map((sup) => (
-              <option key={sup.id} value={sup.id}>{sup.name}</option>
+              <option key={sup.id} value={sup.id}>
+                {sup.name}
+              </option>
             ))}
           </select>
           {errors.supplierId && <p className="mt-1 text-xs text-red-600">{errors.supplierId}</p>}
@@ -139,15 +142,13 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Quantity *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
           <input
             type="number"
             name="quantity"
             value={formData.quantity}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
               errors.quantity ? 'border-red-500' : 'border-gray-300'
             }`}
             min="0"
@@ -156,14 +157,12 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Unit *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Unit *</label>
           <select
             name="unit"
             value={formData.unit}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
               errors.unit ? 'border-red-500' : 'border-gray-300'
             }`}
           >
@@ -175,15 +174,13 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Unit Price *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price *</label>
           <input
             type="number"
             name="unitPrice"
             value={formData.unitPrice}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
               errors.unitPrice ? 'border-red-500' : 'border-gray-300'
             }`}
             min="0"
@@ -195,15 +192,13 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Reorder Level *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Reorder Level *</label>
           <input
             type="number"
             name="reorderLevel"
             value={formData.reorderLevel}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
               errors.reorderLevel ? 'border-red-500' : 'border-gray-300'
             }`}
             min="0"
@@ -212,15 +207,13 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Location *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
           <input
             type="text"
             name="location"
             value={formData.location}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
               errors.location ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="e.g., Aisle A-1"
@@ -230,15 +223,13 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Expiry Date (Optional)
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date (Optional)</label>
         <input
           type="date"
           name="expiryDate"
           value={formData.expiryDate}
           onChange={handleChange}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 ${
             errors.expiryDate ? 'border-red-500' : 'border-gray-300'
           }`}
         />
@@ -246,15 +237,13 @@ const AddItemForm: React.FC<AddItemFormProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Description (Optional)
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
         <textarea
           name="description"
           value={formData.description}
           onChange={handleChange}
           rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
           placeholder="Enter item description..."
         />
       </div>

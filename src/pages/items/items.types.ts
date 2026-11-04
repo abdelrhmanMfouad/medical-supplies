@@ -35,8 +35,19 @@ export interface CreateItemDTO {
   description?: string;
 }
 
-export interface UpdateItemDTO extends Partial<CreateItemDTO> {
-  id: string;
+export interface UpdateItemDTO {
+  id: string;          // ✅ id مطلوب
+  name?: string;
+  sku?: string;
+  categoryId?: string;
+  quantity?: number;
+  unit?: string;
+  unitPrice?: number;
+  reorderLevel?: number;
+  location?: string;
+  supplierId?: string;
+  expiryDate?: string;
+  description?: string;
 }
 
 export interface ItemsState {

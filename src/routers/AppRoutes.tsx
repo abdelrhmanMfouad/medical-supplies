@@ -10,6 +10,7 @@ import ItemsPage from '../pages/items/ItemsPage';
 import CategoriesPage from '../pages/categories/CategoriesPage';
 import SuppliersPage from '../pages/suppliers/SuppliersPage';
 import StockPage from '../pages/stock/StockPage';
+import ReportsPage from '../pages/reports/ReportsPage';
 // Dashboard Page مؤقتة
 const DashboardPage = () => {
   return (
@@ -41,6 +42,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/suppliers" element={<SuppliersPage />} />
         <Route path="/stock" element={<StockPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
       </Route>
     </Routes>
   );

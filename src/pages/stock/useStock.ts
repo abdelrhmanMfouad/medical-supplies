@@ -36,8 +36,10 @@ export const useStock = () => {
     successMessage,
     pagination,
     filters,
+    items,
   } = useSelector((state: RootState) => state.stock);
 
+  // ✅ Filter transactions
   const filteredTransactions = useMemo(() => {
     let result = [...transactions];
 
@@ -45,8 +47,8 @@ export const useStock = () => {
       const searchLower = filters.search.toLowerCase();
       result = result.filter(
         (t) =>
-          t.itemName.toLowerCase().includes(searchLower) ||
-          t.sku.toLowerCase().includes(searchLower) ||
+          t.itemName?.toLowerCase().includes(searchLower) ||
+          t.sku?.toLowerCase().includes(searchLower) ||
           t.reference?.toLowerCase().includes(searchLower)
       );
     }
@@ -78,6 +80,7 @@ export const useStock = () => {
 
   const totalPages = Math.ceil(filteredTransactions.length / pagination.itemsPerPage);
 
+  // ✅ Load data
   useEffect(() => {
     dispatch(fetchTransactions());
     dispatch(fetchItemsForDropdown());
@@ -95,13 +98,19 @@ export const useStock = () => {
   );
 
   const handleStockIn = useCallback(
-    async (data: StockInDTO) => {
+  async (data: StockInDTO) => {
+    try {
+      console.log('📥 handleStockIn called with:', data);  // ✅ Debug
       const result = await dispatch(stockIn(data)).unwrap();
+      console.log('✅ handleStockIn result:', result);
       return result;
-    },
-    [dispatch]
-  );
-
+    } catch (error) {
+      console.error('❌ handleStockIn error:', error);
+      throw error;
+    }
+  },
+  [dispatch]
+);
   const handleStockOut = useCallback(
     async (data: StockOutDTO) => {
       const result = await dispatch(stockOut(data)).unwrap();
@@ -188,6 +197,7 @@ export const useStock = () => {
       totalItems: filteredTransactions.length,
     },
     filters,
+    items,
     
     loadTransactions,
     getTransaction,

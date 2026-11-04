@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from './useAuth';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../../store/store';
+import { forgotPassword, clearError } from './authSlice';
 import { validateForgotPassword, ForgotPasswordErrors } from './authValidation';
 
 export const ForgotPasswordPage: React.FC = () => {
-  const { forgotPassword, isLoading, error, clearError } = useAuth();
-  
+  const dispatch = useDispatch<AppDispatch>();
+  const { isLoading, error: authError } = useSelector((state: RootState) => state.auth);
+
   const [email, setEmail] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<ForgotPasswordErrors>({});
   const [localError, setLocalError] = useState<string | null>(null);
@@ -13,31 +16,31 @@ export const ForgotPasswordPage: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      clearError();
+      dispatch(clearError());
     };
-  }, [clearError]);
+  }, [dispatch]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLocalError(null);
     setSuccessMessage(null);
-    clearError();
-    
+    dispatch(clearError());
+
     const errors = validateForgotPassword(email);
     setValidationErrors(errors);
-    
+
     if (Object.keys(errors).length === 0) {
       try {
-        const result = await forgotPassword({ email });
+        const result = await dispatch(forgotPassword({ email })).unwrap();
         setSuccessMessage(result.message);
         setEmail('');
       } catch (err) {
-        setLocalError(err as string);
+        setLocalError(typeof err === 'string' ? err : 'Something went wrong');
       }
     }
   };
 
-  const displayError = localError || error;
+  const displayError = localError || authError;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -50,28 +53,34 @@ export const ForgotPasswordPage: React.FC = () => {
             Enter your email address and we'll send you a link to reset your password.
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {displayError && (
             <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-700">{displayError}</p>
+              <p className="text-sm text-red-700">
+                {typeof displayError === 'string' ? displayError : 'Something went wrong'}
+              </p>
             </div>
           )}
-          
+
           {successMessage && (
             <div className="rounded-md bg-green-50 p-4">
               <p className="text-sm text-green-700">{successMessage}</p>
+              <p className="text-xs text-green-600 mt-1">
+                📧 Please check your email inbox (and spam folder).
+              </p>
             </div>
           )}
-          
+
           <div>
             <input
-              id="email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className={`mt-1 block w-full px-3 py-2 border ${
+                validationErrors.email ? 'border-red-300' : 'border-gray-300'
+              } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
               placeholder="Email Address"
             />
             {validationErrors.email && (
@@ -86,7 +95,7 @@ export const ForgotPasswordPage: React.FC = () => {
           >
             {isLoading ? 'Sending...' : 'Send Reset Link'}
           </button>
-          
+
           <div className="text-sm text-center">
             <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
               Back to Sign In
@@ -97,4 +106,3 @@ export const ForgotPasswordPage: React.FC = () => {
     </div>
   );
 };
-export default ForgotPasswordPage;
